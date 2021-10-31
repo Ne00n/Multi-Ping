@@ -27,9 +27,10 @@ while count <= len(targets):
     results += p.stdout.decode('utf-8')
     count += 100
 
-parsed = re.findall("([0-9.]+).*?([0-9]+.[0-9]).*?([0-9])% loss",results, re.MULTILINE)
+parsed = re.findall("([0-9.]+).*?([0-9]+.[0-9]+|NaN).*?([0-9])% loss",results, re.MULTILINE)
 results = {}
 for ip,ms,loss in parsed:
+    if ms is "NaN": ms = 900
     if ip not in results: results[ip] = float(ms)
 
 sorted = {k: results[k] for k in sorted(results, key=results.get)}
