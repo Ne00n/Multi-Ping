@@ -9,3 +9,9 @@ but with Pings
 ![data mining](https://thumbs.gfycat.com/MisguidedReasonableFulmar-max-1mb.gif)
 
 Its magic, it gives you the closest providers with available services, based on latency.
+
+**Examples**<br />
+
+```
+ curl -so- https://raw.githubusercontent.com/Ne00n/Multi-Ping/master/ping.py | python3 
+```
