@@ -39,7 +39,7 @@ result,top = [],10
 for index,ip in enumerate(sorted.items()):
     data = getLG(ip[0])
     result.append(f"{ip[1]}ms\t({ip[0]})\twhich is\t{data[0]}\t({data[1]})")
-    if float(ip[1]) < 15: top += 1
+    if float(ip[1]) < 15 and index == 10: top += 1
     if index == top: break
 
 def formatTable(list):
