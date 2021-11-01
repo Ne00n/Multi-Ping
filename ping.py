@@ -38,7 +38,7 @@ sorted = {k: results[k] for k in sorted(results, key=results.get)}
 result,top = [],10
 for index,ip in enumerate(sorted.items()):
     data = getLG(ip[0])
-    result.append(f"{ip[1]}ms\t({ip[0]})\twhich is\t{data[0]}\t({data[1]})")
+    result.append(f"{ip[1]}ms\t({ip[0]})\t{data[0]}\t({data[1]})")
     if float(ip[1]) < 15 and index == top: top += 1
     if index == top: break
 
@@ -56,7 +56,7 @@ def formatTable(list):
                 diff = longest[index] - len(entry)
                 while len(entry) < longest[index]:
                     entry += " "
-            response += f" {entry}"
+            response += f"{entry}" if response.endswith("\n") or response == "" else f" {entry}"
         if i < len(list) -1: response += "\n"
     return response
 
