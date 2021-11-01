@@ -35,11 +35,12 @@ for ip,ms,loss in parsed:
 
 sorted = {k: results[k] for k in sorted(results, key=results.get)}
 
-result = []
+result,top = [],10
 for index,ip in enumerate(sorted.items()):
     data = getLG(ip[0])
     result.append(f"{ip[1]}ms\t({ip[0]})\twhich is\t{data[0]}\t({data[1]})")
-    if index == 10: break
+    if float(ip[1]) < 15: top += 1
+    if index == top: break
 
 def formatTable(list):
     longest,response = {},""
@@ -60,6 +61,6 @@ def formatTable(list):
     return response
 
 result = formatTable(result)
-print("--- Top 10 ---")
+print(f"--- Top {top} ---")
 print(result)
 print("-- Results ---")
