@@ -3,7 +3,7 @@ import subprocess, requests, json, re
 def getLG(target):
     for domain,lgs in json.items():
         for lg,ip in lgs.items():
-            if ip and ip['ipv4'] == target: return lg
+            if ip and ip['ipv4'] == target: return [domain,lg]
 
 file = "https://raw.githubusercontent.com/Ne00n/Looking-Glass/master/data/everything.json"
 print(f"Fetching {file}")
@@ -35,9 +35,31 @@ for ip,ms,loss in parsed:
 
 sorted = {k: results[k] for k in sorted(results, key=results.get)}
 
-print("--- Top 10 ---")
+result = []
 for index,ip in enumerate(sorted.items()):
-    lg = getLG(ip[0])
-    print(f"{ip[1]}ms ({ip[0]}) which is {lg}")
+    data = getLG(ip[0])
+    result.append(f"{ip[1]}ms ({ip[0]}) which is {data[0]} ({data[1]})")
     if index == 10: break
+
+def formatTable(list):
+    longest,response = {},""
+    for row in list:
+        elements = row.split()
+        for index, entry in enumerate(elements):
+            if not index in longest: longest[index] = 0
+            if len(entry) > longest[index]: longest[index] = len(entry)
+    for i, row in enumerate(list):
+        elements = row.split()
+        for index, entry in enumerate(elements):
+            if len(entry) < longest[index]:
+                diff = longest[index] - len(entry)
+                while len(entry) < longest[index]:
+                    entry += " "
+            response += f" {entry}"
+        if i < len(list) -1: response += "\n"
+    return response
+
+result = formatTable(result)
+print("--- Top 10 ---")
+print(result)
 print("-- Results ---")
