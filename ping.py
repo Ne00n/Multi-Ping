@@ -38,18 +38,18 @@ sorted = {k: results[k] for k in sorted(results, key=results.get)}
 result = []
 for index,ip in enumerate(sorted.items()):
     data = getLG(ip[0])
-    result.append(f"{ip[1]}ms ({ip[0]}) which is {data[0]} ({data[1]})")
+    result.append(f"{ip[1]}ms\t({ip[0]})\twhich is\t{data[0]}\t({data[1]})")
     if index == 10: break
 
 def formatTable(list):
     longest,response = {},""
     for row in list:
-        elements = row.split()
+        elements = row.split("\t")
         for index, entry in enumerate(elements):
             if not index in longest: longest[index] = 0
             if len(entry) > longest[index]: longest[index] = len(entry)
     for i, row in enumerate(list):
-        elements = row.split()
+        elements = row.split("\t")
         for index, entry in enumerate(elements):
             if len(entry) < longest[index]:
                 diff = longest[index] - len(entry)
