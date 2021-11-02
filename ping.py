@@ -14,7 +14,8 @@ json = json.loads(raw.text)
 targets,count = [],0
 for domain,lgs in json.items():
     for lg,ip in lgs.items():
-        if ip: targets.append(ip['ipv4'])
+        if ip:
+            for ip in ip['ipv4']: targets.append(ip)
 
 results = ""
 while count <= len(targets):
