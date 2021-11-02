@@ -2,8 +2,10 @@ import subprocess, requests, json, re
 
 def getLG(target):
     for domain,lgs in json.items():
-        for lg,ip in lgs.items():
-            if ip and ip['ipv4'] == target: return [domain,lg]
+        for lg,ips in lgs.items():
+            if ips['ipv4']:
+                for ip in ips['ipv4']:
+                    if ip == target: return [domain,lg]
 
 file = "https://raw.githubusercontent.com/Ne00n/Looking-Glass/master/data/everything.json"
 print(f"Fetching {file}")
