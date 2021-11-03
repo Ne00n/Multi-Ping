@@ -15,6 +15,4 @@ Its magic, it gives you the closest providers with available services, based on 
 ```
  curl -so- https://raw.githubusercontent.com/Ne00n/Multi-Ping/master/ping.py | python3
 ```
-
-Could return you:
 ![data mining](https://i.imgur.com/vNn79Qc.gif)
