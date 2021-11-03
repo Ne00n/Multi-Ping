@@ -3,7 +3,7 @@ import subprocess, requests, json, re
 def getLG(target):
     for domain,lgs in json.items():
         for lg,ips in lgs.items():
-            if ips['ipv4']:
+            if ips and ips['ipv4']:
                 for ip in ips['ipv4']:
                     if ip == target: return [domain,lg]
 
