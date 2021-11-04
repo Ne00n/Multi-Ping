@@ -1,23 +1,19 @@
 import subprocess, requests, json, re
 
-def getLG(target):
-    for domain,lgs in json.items():
-        for lg,ips in lgs.items():
-            if ips and ips['ipv4']:
-                for ip in ips['ipv4']:
-                    if ip == target: return [domain,lg]
-
 file = "https://raw.githubusercontent.com/Ne00n/Looking-Glass/master/data/everything.json"
 print(f"Fetching {file}")
 
 raw = requests.get(file,allow_redirects=False,timeout=3)
 json = json.loads(raw.text)
 
-targets,count = [],0
+targets,count,mapping = [],0,{}
 for domain,lgs in json.items():
     for lg,ip in lgs.items():
         if ip:
-            for ip in ip['ipv4']: targets.append(ip)
+            for ip in ip['ipv4']:
+                targets.append(ip)
+                mapping[ip] = {}
+                mapping[ip] = {"domain":domain,"lg":lg}
 
 results = ""
 while count <= len(targets):
@@ -40,8 +36,8 @@ sorted = {k: results[k] for k in sorted(results, key=results.get)}
 
 result,top = [],10
 for index,ip in enumerate(sorted.items()):
-    data = getLG(ip[0])
-    result.append(f"{ip[1]}ms\t({ip[0]})\t{data[0]}\t({data[1]})")
+    data = mapping[ip[0]]
+    result.append(f"{ip[1]}ms\t({ip[0]})\t{data['domain']}\t({data['lg']})")
     if float(ip[1]) < 15 and index == top: top += 1
     if index == top: break
 
