@@ -1,11 +1,13 @@
 import subprocess, requests, json, sys, re
 
 pings = 1
+mode = "ipv4"
 
-if len(sys.argv) == 2:
-    args = re.findall("((-c)\s?([0-9]+))",sys.argv[1])
+if len(sys.argv) >= 2:
+    args = re.findall("((-c)\s?([0-9]+)|-6)",' '.join(sys.argv[1:]))
     for arg in args:
         if arg[1] == "-c": pings = float(arg[2])
+        if arg[0] == "-6": mode = "ipv6"
 
 file = "https://raw.githubusercontent.com/Ne00n/Looking-Glass/master/data/everything.json"
 print(f"Fetching {file}")
@@ -17,7 +19,7 @@ targets,count,mapping = [],0,{}
 for domain,lgs in json.items():
     for lg,ip in lgs.items():
         if ip:
-            for ip in ip['ipv4']:
+            for ip in ip[mode]:
                 targets.append(ip)
                 mapping[ip] = {}
                 mapping[ip] = {"domain":domain,"lg":lg}
@@ -33,7 +35,7 @@ while count <= len(targets):
     results += p.stdout.decode('utf-8')
     count += 100
 
-parsed = re.findall("([0-9.]+).*?([0-9]+.[0-9]+|NaN).*?([0-9])% loss",results, re.MULTILINE)
+parsed = re.findall("([0-9.:a-z]+).*?([0-9]+.[0-9]+|NaN).*?([0-9])% loss",results, re.MULTILINE)
 results = {}
 for ip,ms,loss in parsed:
     if ms == "NaN": ms = 900
