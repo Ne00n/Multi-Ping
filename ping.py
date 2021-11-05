@@ -1,4 +1,11 @@
-import subprocess, requests, json, re
+import subprocess, requests, json, sys, re
+
+pings = 1
+
+if len(sys.argv) == 2:
+    args = re.findall("((-c)\s?([0-9]+))",sys.argv[1])
+    for arg in args:
+        if arg[1] == "-c": pings = float(arg[2])
 
 file = "https://raw.githubusercontent.com/Ne00n/Looking-Glass/master/data/everything.json"
 print(f"Fetching {file}")
@@ -19,7 +26,7 @@ results = ""
 while count <= len(targets):
     print(f"fping {count} of {len(targets)}")
     batch = ' '.join(targets[count:count+100])
-    p = subprocess.run(f"fping -c 1 {batch}", stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    p = subprocess.run(f"fping -c {pings} {batch}", stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     if "command not found" in p.stdout.decode('utf-8'):
         print("Please install fping")
         exit()
