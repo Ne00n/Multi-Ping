@@ -49,7 +49,7 @@ result,top = [],10
 for index,ip in enumerate(sorted.items()):
     data = mapping[ip[0]]
     result.append(f"{ip[1]}ms\t({ip[0]})\t{data['domain']}\t({data['lg']})")
-    if float(ip[1]) < 15 and index == top: top += 1
+    if float(ip[1]) < 20 and index == top: top += 1
     if index == top: break
 
 def formatTable(list):
