@@ -45,7 +45,7 @@ for ip,ms,loss in parsed:
 
 sorted = {k: results[k] for k in sorted(results, key=results.get)}
 
-result,top = [],10
+result,top = [],15
 for index,ip in enumerate(sorted.items()):
     data = mapping[ip[0]]
     result.append(f"{ip[1]}ms\t({ip[0]})\t{data['domain']}\t({data['lg']})")
