@@ -1,12 +1,14 @@
 import subprocess, requests, json, sys, re
 
 pings = 1
+batchSize = 100
 mode = "ipv4"
 
 if len(sys.argv) >= 2:
-    args = re.findall("((-c)\s?([0-9]+)|-6)",' '.join(sys.argv[1:]))
+    args = re.findall("((-c|-p)\s?([0-9]+)|-6)",' '.join(sys.argv[1:]))
     for arg in args:
         if arg[1] == "-c": pings = float(arg[2])
+        if arg[1] == "-p": batchSize = int(arg[2])
         if arg[0] == "-6": mode = "ipv6"
 
 file = "https://raw.githubusercontent.com/Ne00n/Looking-Glass/master/data/everything.json"
@@ -27,13 +29,13 @@ for domain,lgs in json.items():
 results = ""
 while count <= len(targets):
     print(f"fping {count} of {len(targets)}")
-    batch = ' '.join(targets[count:count+100])
+    batch = ' '.join(targets[count:count+batchSize])
     p = subprocess.run(f"fping -c {pings} {batch}", stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     if "command not found" in p.stdout.decode('utf-8'):
         print("Please install fping")
         exit()
     results += p.stdout.decode('utf-8')
-    count += 100
+    count += batchSize
 
 parsed = re.findall("([0-9.:a-z]+).*?([0-9]+.[0-9]+|NaN).*?([0-9])% loss",results, re.MULTILINE)
 results = {}
