@@ -32,7 +32,7 @@ while count <= len(targets):
     batch = ' '.join(targets[count:count+batchSize])
     p = subprocess.run(f"fping -c {pings} {batch}", stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
     if not p.stdout.decode('utf-8'):
-        print("Please install fping")
+        print("Please install fping (apt-get install fping / yum install fping)")
         exit()
     results += p.stdout.decode('utf-8')
     count += batchSize
