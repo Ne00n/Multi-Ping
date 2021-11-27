@@ -31,7 +31,7 @@ while count <= len(targets):
     print(f"fping {count} of {len(targets)}")
     batch = ' '.join(targets[count:count+batchSize])
     p = subprocess.run(f"fping -c {pings} {batch}", stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    if "command not found" in p.stdout.decode('utf-8'):
+    if not p.stdout.decode('utf-8'):
         print("Please install fping")
         exit()
     results += p.stdout.decode('utf-8')
