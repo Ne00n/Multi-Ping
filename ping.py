@@ -21,10 +21,10 @@ targets,count,mapping = [],0,{}
 for domain,lgs in json.items():
     for lg,ip in lgs.items():
         if ip:
-            for ip in ip[mode]:
+            for ip,location in ip[mode].items():
                 targets.append(ip)
                 mapping[ip] = {}
-                mapping[ip] = {"domain":domain,"lg":lg}
+                mapping[ip] = {"domain":domain,"lg":lg,"geo":location}
 
 results = ""
 while count <= len(targets):
@@ -46,9 +46,11 @@ for ip,ms,loss in parsed:
 sorted = {k: results[k] for k in sorted(results, key=results.get)}
 
 result,top = [],15
+result.append("Latency\tIP address\tDomain\tLocation (Maxmind)\tLooking Glass")
+result.append("-------\t-------\t-------\t-------\t-------")
 for index,ip in enumerate(sorted.items()):
     data = mapping[ip[0]]
-    result.append(f"{ip[1]}ms\t({ip[0]})\t{data['domain']}\t({data['lg']})")
+    result.append(f"{ip[1]}ms\t{ip[0]}\t{data['domain']}\t{data['geo']}\t{data['lg']}")
     if float(ip[1]) < 20 and index == top: top += 1
     if index == top: break
 
@@ -71,6 +73,5 @@ def formatTable(list):
     return response
 
 result = formatTable(result)
-print(f"--- Top {top} ---")
+print(f"\nTop {top}")
 print(result)
-print("-- Results ---")
