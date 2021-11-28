@@ -1,4 +1,4 @@
-import subprocess, requests, json, sys, re
+import subprocess, requests, json, time, sys, re
 
 pings = 1
 batchSize = 100
@@ -12,10 +12,27 @@ if len(sys.argv) >= 2:
         if arg[0] == "-6": mode = "ipv6"
 
 file = "https://raw.githubusercontent.com/Ne00n/Looking-Glass/master/data/everything.json"
-print(f"Fetching {file}")
 
-raw = requests.get(file,allow_redirects=False,timeout=3)
-json = json.loads(raw.text)
+def error(run):
+    print(f"Retrying {run+1} of 4")
+    if run == 3:
+        print("Aborting, limit reached.")
+        exit()
+    time.sleep(2)
+
+for run in range(4):
+    try:
+        print(f"Fetching {file}")
+        raw = requests.get(file,allow_redirects=False,timeout=3)
+        if (raw.status_code == 200):
+            json = json.loads(raw.text)
+            break
+        else:
+            print("Got non 200 response code")
+            error(run)
+    except Exception as e:
+        print(f"Error {e}")
+        error(run)
 
 targets,count,mapping = [],0,{}
 for domain,lgs in json.items():
