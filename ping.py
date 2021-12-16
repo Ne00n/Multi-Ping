@@ -1,4 +1,10 @@
-import subprocess, requests, json, time, sys, re
+import subprocess, json, time, sys, re
+
+try:
+    import requests
+except ImportError as e:
+    print("Please install requests with apt-get install python3-requests")
+    exit()
 
 pings = 1
 batchSize = 100
