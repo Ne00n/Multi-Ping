@@ -1,10 +1,4 @@
-import subprocess, json, time, sys, re
-
-try:
-    import requests
-except ImportError as e:
-    print("Please install requests with apt-get install python3-requests")
-    exit()
+import urllib.request, subprocess, json, time, sys, re
 
 pings = 1
 batchSize = 100
@@ -31,9 +25,10 @@ def error(run):
 for run in range(4):
     try:
         print(f"Fetching {file}")
-        raw = requests.get(file,allow_redirects=False,timeout=3)
-        if (raw.status_code == 200):
-            json = json.loads(raw.text)
+        request = urllib.request.urlopen(file, timeout=3)
+        if (request.getcode() == 200):
+            raw = request.read().decode('utf-8')
+            json = json.loads(raw)
             break
         else:
             print("Got non 200 response code")
