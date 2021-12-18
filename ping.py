@@ -9,12 +9,14 @@ except ImportError as e:
 pings = 1
 batchSize = 100
 mode = "ipv4"
+target = ""
 
 if len(sys.argv) >= 2:
-    args = re.findall("((-c|-p)\s?([0-9]+)|-6)",' '.join(sys.argv[1:]))
+    args = re.findall("((-c|-p|-l)\s?([0-9A-Za-z]+)|-6)",' '.join(sys.argv[1:]))
     for arg in args:
         if arg[1] == "-c": pings = float(arg[2])
         if arg[1] == "-p": batchSize = int(arg[2])
+        if arg[1] == "-l": target = arg[2]
         if arg[0] == "-6": mode = "ipv6"
 
 file = "https://raw.githubusercontent.com/Ne00n/Looking-Glass/master/data/everything.json"
@@ -45,9 +47,10 @@ for domain,lgs in json.items():
     for lg,ip in lgs.items():
         if ip:
             for ip,location in ip[mode].items():
-                targets.append(ip)
                 mapping[ip] = {}
-                mapping[ip] = {"domain":domain,"lg":lg,"geo":location}
+                if target == "" or target in location:
+                    mapping[ip] = {"domain":domain,"lg":lg,"geo":location}
+                    targets.append(ip)
 
 results = ""
 while count <= len(targets):
