@@ -10,6 +10,15 @@ but with Pings
 
 Its magic, it gives you the closest providers with available services, based on latency.
 
+**Params**<br />
+
+```
+ -6 Ping via IPv6, Default IPv4
+ -c Amount of Pings, Default 1
+ -p Batch Size, Default 100
+ -l Country Selector, Default Any
+```
+
 **Examples**<br />
 
 ```
