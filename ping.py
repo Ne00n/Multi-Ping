@@ -75,7 +75,7 @@ for ip,ms,loss in parsed:
 
 sorted = {k: results[k] for k in sorted(results, key=results.get)}
 
-result,top = [],15
+result,top = [],50
 result.append("Latency\tIP address\tDomain\tLocation (Maxmind)\tLooking Glass")
 result.append("-------\t-------\t-------\t-------\t-------")
 for index,ip in enumerate(sorted.items()):
