@@ -2,18 +2,23 @@ import urllib.request, subprocess, json, time, sys, re
 
 pings = 1
 batchSize = 100
+newRepo = False
 mode = "ipv4"
 target = ""
 
 if len(sys.argv) >= 2:
-    args = re.findall("((-c|-p|-l)\s?([0-9A-Za-z]+)|-6)",' '.join(sys.argv[1:]))
+    args = re.findall("((-c|-p|-l)\s?([0-9A-Za-z]+)|-6|-2)",' '.join(sys.argv[1:]))
     for arg in args:
         if arg[1] == "-c": pings = float(arg[2])
         if arg[1] == "-p": batchSize = int(arg[2])
         if arg[1] == "-l": target = arg[2]
         if arg[0] == "-6": mode = "ipv6"
+        if arg[0] == "-2": newRepo = True
 
-file = "https://raw.githubusercontent.com/Ne00n/Looking-Glass/master/data/everything.json"
+if newRepo:
+    file = "https://raw.githubusercontent.com/Ne00n/Looking-Glass-2/master/data/everything.json"
+else:
+    file = "https://raw.githubusercontent.com/Ne00n/Looking-Glass/master/data/everything.json"
 
 def error(run):
     print(f"Retrying {run+1} of 4")

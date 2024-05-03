@@ -17,6 +17,7 @@ Its magic, it gives you the closest providers with available services, based on 
  -c Amount of Pings, Default 1
  -p Batch Size, Default 100
  -l Country Selector, Default Any
+ -2 New Repo (Looking-Glass-2)
 ```
 
 **Examples**<br />
@@ -25,5 +26,6 @@ Its magic, it gives you the closest providers with available services, based on 
  curl -so- https://raw.githubusercontent.com/Ne00n/Multi-Ping/master/ping.py | python3
  curl -so- https://raw.githubusercontent.com/Ne00n/Multi-Ping/master/ping.py | python3 - -6
  curl -so- https://raw.githubusercontent.com/Ne00n/Multi-Ping/master/ping.py | python3 - -6 -c15
+ curl -so- https://raw.githubusercontent.com/Ne00n/Multi-Ping/master/ping.py | python3 - -p10 -2
 ```
 ![data mining](https://i.imgur.com/vNn79Qc.gif)
