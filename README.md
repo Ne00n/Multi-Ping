@@ -2,11 +2,11 @@
 
 Uses data from https://github.com/Ne00n/Looking-Glass
 
-![data mining](https://assets-cache0.moviebreak.de/system/bilder/story/photo/596dd05a6e73330b15070000/Multi_Pass1.jpg)
+![multipass](https://assets-cache0.moviebreak.de/system/bilder/story/photo/596dd05a6e73330b15070000/Multi_Pass1.jpg)
 
 but with Pings
 
-![data mining](https://thumbs.gfycat.com/MisguidedReasonableFulmar-max-1mb.gif)
+![one ping](https://media.licdn.com/dms/image/C5622AQENhqeHj7AaRw/feedshare-shrink_2048_1536/0/1626309747501?e=2147483647&v=beta&t=_a-JghvePLBqr-W6LC0j9_C3fEg9rkMSuKuHn2dWt1Q)
 
 Its magic, it gives you the closest providers with available services, based on latency.
 
