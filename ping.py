@@ -13,15 +13,7 @@ if len(sys.argv) >= 2:
         if arg[1] == "-l": target = arg[2]
         if arg[0] == "-6": mode = "ipv6"
 
-print("Please select a source file")
-print("1: Looking-Glass, old but larger")
-print("2: Looking-Glass-2, new but smoler")
-sourceFile = input("Please input either 1 or 2: ")
-
-if sourceFile == "2":
-    file = "https://raw.githubusercontent.com/Ne00n/Looking-Glass-2/master/data/everything.json"
-else:
-    file = "https://raw.githubusercontent.com/Ne00n/Looking-Glass/master/data/everything.json"
+file = "https://raw.githubusercontent.com/Ne00n/Looking-Glass/master/data/everything.json"
 
 def error(run):
     print(f"Retrying {run+1} of 4")
