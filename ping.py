@@ -6,12 +6,12 @@ targetASN = ""
 everything = False
 
 if len(sys.argv) >= 2:
-    args = re.findall("((-c|-p|-a|-e)\s?([0-9A-Za-z]+)|-6|-2)",' '.join(sys.argv[1:]))
+    args = re.findall("((-c|-p|-a)\s?([0-9A-Za-z]+)|-e)",' '.join(sys.argv[1:]))
     for arg in args:
         if arg[1] == "-c": pings = float(arg[2])
         if arg[1] == "-p": batchSize = int(arg[2])
         if arg[1] == "-a": targetASN = arg[2]
-        if arg[1] == "-e": everything = True
+        if arg[0] == "-e": everything = True
 
 file = "https://data.neoon.net/pingable.min.min.json"
 
@@ -38,15 +38,19 @@ for run in range(4):
         error(run)
 
 targets,count,mapping = [],0,{}
-for asn,subnets in json['data'].items():
-    for subnet, ips in subnets.items():
-        ip = random.choice(ips)
-        ip = f"{subnet}{ip}"
-        mapping[ip] = {}
-        if targetASN == "" or asn == targetASN:
-            mapping[ip] = {"asn":asn}
-            targets.append(ip)
+for asn,data in json['data'].items():
+    if targetASN != "" and asn != targetASN: continue
+    for firstOctet, firstLayer in data.items():
+        for secondOctet, secondLayer in firstLayer.items():
+            for thirdOctet, ips in secondLayer.items():
+                subnet = f"{firstOctet}.{secondOctet}.{thirdOctet}"
+                ip = random.choice(ips)
+                ip = f"{subnet}.{ip}"
+                mapping[ip] = {"asn":asn}
+                targets.append(ip)
+                break
             if not everything: break
+        if not everything: break
 
 results = ""
 while count <= len(targets):
