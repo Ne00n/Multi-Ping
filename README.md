@@ -1,6 +1,6 @@
 # Multi-Ping
 
-Uses data from https://github.com/Ne00n/Looking-Glass
+Uses data from https://data.neoon.net/
 
 ![multipass](https://assets-cache0.moviebreak.de/system/bilder/story/photo/596dd05a6e73330b15070000/Multi_Pass1.jpg)
 
@@ -13,19 +13,16 @@ Its magic, it gives you the closest providers with available services, based on 
 **Params**<br />
 
 ```
- -6 Ping via IPv6, Default IPv4
  -c Amount of Pings, Default 1
  -p Batch Size, Default 100
- -l Country Selector, Default Any
- -2 New Repo (Looking-Glass-2)
+ -a ASN Selector, Default Any
 ```
 
 **Examples**<br />
 
 ```
  curl -so- https://raw.githubusercontent.com/Ne00n/Multi-Ping/master/ping.py | python3
- curl -so- https://raw.githubusercontent.com/Ne00n/Multi-Ping/master/ping.py | python3 - -6
- curl -so- https://raw.githubusercontent.com/Ne00n/Multi-Ping/master/ping.py | python3 - -6 -c15
- curl -so- https://raw.githubusercontent.com/Ne00n/Multi-Ping/master/ping.py | python3 - -p10 -2
+ curl -so- https://raw.githubusercontent.com/Ne00n/Multi-Ping/master/ping.py | python3 - -c15
+ curl -so- https://raw.githubusercontent.com/Ne00n/Multi-Ping/master/ping.py | python3 - -p10 -c15
 ```
 ![data mining](https://i.imgur.com/vNn79Qc.gif)

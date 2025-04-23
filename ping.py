@@ -2,7 +2,6 @@ import urllib.request, subprocess, json, time, sys, re
 
 pings = 1
 batchSize = 100
-newRepo = False
 mode = "ipv4"
 target = ""
 
@@ -13,12 +12,8 @@ if len(sys.argv) >= 2:
         if arg[1] == "-p": batchSize = int(arg[2])
         if arg[1] == "-l": target = arg[2]
         if arg[0] == "-6": mode = "ipv6"
-        if arg[0] == "-2": newRepo = True
 
-if newRepo:
-    file = "https://raw.githubusercontent.com/Ne00n/Looking-Glass-2/master/data/everything.json"
-else:
-    file = "https://raw.githubusercontent.com/Ne00n/Looking-Glass/master/data/everything.json"
+file = "https://data.neoon.net/pingable.min.min.json"
 
 def error(run):
     print(f"Retrying {run+1} of 4")
