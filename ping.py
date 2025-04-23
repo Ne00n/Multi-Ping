@@ -1,4 +1,4 @@
-import urllib.request, subprocess, random, json, time, sys, re
+import urllib.request, subprocess, random, json, time, sys, re, tempfile, os
 
 pings = 1
 batchSize = 100
@@ -22,41 +22,75 @@ def error(run):
         exit()
     time.sleep(2)
 
-targets,mapping = [],{}
+# Create a temporary file to store the downloaded content
+temp_file = None
 for run in range(4):
     try:
-        print(f"Fetching {file}")
-        request = urllib.request.urlopen(file, timeout=3)
-        if (request.getcode() == 200):
-            print(f"Loading {file}")
-            raw = request.read().decode('utf-8')
-            lines = raw.strip().split('\n')
-            for index, line in enumerate(lines):
-                if index == 0: continue
-                jData = json.loads(line)
-                for asn,data in jData.items():
-                    if targetASN != "" and asn != targetASN: continue
-                    for firstOctet, firstLayer in data.items():
-                        for secondOctet, secondLayer in firstLayer.items():
-                            for thirdOctet, ips in secondLayer.items():
-                                subnet = f"{firstOctet}.{secondOctet}.{thirdOctet}"
-                                ip = random.choice(ips)
-                                ip = f"{subnet}.{ip}"
-                                mapping[ip] = {"asn":asn}
-                                targets.append(ip)
-                                if not everything: break
-                            if not everything: break
-                        if not everything: break
-            break
-        else:
-            print("Got non 200 response code")
-            error(run)
+        with tempfile.NamedTemporaryFile(delete=False, mode='wb') as temp_file:
+            with urllib.request.urlopen(file, timeout=3) as response:
+                if response.getcode() == 200:
+                    print(f"Downloading {file}")
+                    # Download the file in chunks to save memory
+                    chunk_size = 8192
+                    while True:
+                        chunk = response.read(chunk_size)
+                        if not chunk:
+                            break
+                        temp_file.write(chunk)
+                    
+                    temp_filename = temp_file.name
+                    break
+                else:
+                    print("Got non 200 response code")
+                    error(run)
     except Exception as e:
         print(f"Error {e}")
         error(run)
+        if temp_file:
+            try:
+                os.unlink(temp_file.name)
+                temp_file = None
+            except:
+                pass
+
+if not temp_file:
+    print("Failed to download file after multiple attempts")
+    exit()
+
+targets = []
+mapping = {}
+
+try:
+    print(f"Reading {file}")
+    with open(temp_filename, 'r', encoding='utf-8') as f:
+        # Skip the first line if needed
+        first_line = f.readline()
+        
+        # Process the rest of the lines
+        for line in f:
+            jData = json.loads(line)
+            for asn, data in jData.items():
+                if targetASN != "" and asn != targetASN: continue
+                for firstOctet, firstLayer in data.items():
+                    for secondOctet, secondLayer in firstLayer.items():
+                        for thirdOctet, ips in secondLayer.items():
+                            subnet = f"{firstOctet}.{secondOctet}.{thirdOctet}"
+                            ip = random.choice(ips)
+                            ip = f"{subnet}.{ip}"
+                            mapping[ip] = {"asn": asn}
+                            targets.append(ip)
+                            if not everything: break
+                        if not everything: break
+                    if not everything: break
+finally:
+    # Clean up the temporary file
+    try:
+        os.unlink(temp_filename)
+    except:
+        pass
 
 raw = {}
-results,count = "",0
+results, count = "", 0
 while count <= len(targets):
     print(f"fping {count} of {len(targets)}")
     batch = ' '.join(targets[count:count+batchSize])
@@ -68,25 +102,25 @@ while count <= len(targets):
     results += p.stdout.decode('utf-8')
     count += batchSize
 
-parsed = re.findall("([0-9.:a-z]+).*?([0-9]+.[0-9]+|NaN).*?([0-9])% loss",results, re.MULTILINE)
+parsed = re.findall("([0-9.:a-z]+).*?([0-9]+.[0-9]+|NaN).*?([0-9])% loss", results, re.MULTILINE)
 results = {}
-for ip,ms,loss in parsed:
+for ip, ms, loss in parsed:
     if ms == "NaN": ms = 900
     if ip not in results: results[ip] = float(ms)
 
-sorted = {k: results[k] for k in sorted(results, key=results.get)}
+sorted_results = {k: results[k] for k in sorted(results, key=results.get)}
 
-result,top = [],50
+result, top = [], 50
 result.append("Latency\tIP\tASN")
 result.append("-------\t-------\t-------")
-for index,ip in enumerate(sorted.items()):
+for index, ip in enumerate(sorted_results.items()):
     data = mapping[ip[0]]
     result.append(f"{ip[1]}ms\t{ip[0]}\tAS{data['asn']}")
     if float(ip[1]) < 20 and index == top: top += 1
     if index == top: break
 
 def formatTable(list):
-    longest,response = {},""
+    longest, response = {}, ""
     for row in list:
         elements = row.split("\t")
         for index, entry in enumerate(elements):
@@ -100,7 +134,7 @@ def formatTable(list):
                 while len(entry) < longest[index]:
                     entry += " "
             response += f"{entry}" if response.endswith("\n") or response == "" else f" {entry}"
-        if i < len(list) -1: response += "\n"
+        if i < len(list) - 1: response += "\n"
     return response
 
 result = formatTable(result)
