@@ -48,7 +48,7 @@ for asn,data in json['data'].items():
                 ip = f"{subnet}.{ip}"
                 mapping[ip] = {"asn":asn}
                 targets.append(ip)
-                break
+                if not everything: break
             if not everything: break
         if not everything: break
 
