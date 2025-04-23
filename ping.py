@@ -1,17 +1,17 @@
-import urllib.request, subprocess, json, time, sys, re
+import urllib.request, subprocess, random, json, time, sys, re
 
 pings = 1
 batchSize = 100
-mode = "ipv4"
-target = ""
+targetASN = ""
+everything = False
 
 if len(sys.argv) >= 2:
-    args = re.findall("((-c|-p|-l)\s?([0-9A-Za-z]+)|-6|-2)",' '.join(sys.argv[1:]))
+    args = re.findall("((-c|-p|-a|-e)\s?([0-9A-Za-z]+)|-6|-2)",' '.join(sys.argv[1:]))
     for arg in args:
         if arg[1] == "-c": pings = float(arg[2])
         if arg[1] == "-p": batchSize = int(arg[2])
-        if arg[1] == "-l": target = arg[2]
-        if arg[0] == "-6": mode = "ipv6"
+        if arg[1] == "-a": targetASN = arg[2]
+        if arg[1] == "-e": everything = True
 
 file = "https://data.neoon.net/pingable.min.min.json"
 
@@ -38,14 +38,15 @@ for run in range(4):
         error(run)
 
 targets,count,mapping = [],0,{}
-for domain,lgs in json.items():
-    for lg,ip in lgs.items():
-        if ip:
-            for ip,location in ip[mode].items():
-                mapping[ip] = {}
-                if target == "" or target in location:
-                    mapping[ip] = {"domain":domain,"lg":lg,"geo":location}
-                    targets.append(ip)
+for asn,subnets in json['data'].items():
+    for subnet, ips in subnets.items():
+        ip = random.choice(ips)
+        ip = f"{subnet}{ip}"
+        mapping[ip] = {}
+        if targetASN == "" or asn == targetASN:
+            mapping[ip] = {"asn":asn}
+            targets.append(ip)
+            if not everything: break
 
 results = ""
 while count <= len(targets):
@@ -68,11 +69,11 @@ for ip,ms,loss in parsed:
 sorted = {k: results[k] for k in sorted(results, key=results.get)}
 
 result,top = [],50
-result.append("Latency\tIP address\tDomain\tLocation (Maxmind)\tLooking Glass")
-result.append("-------\t-------\t-------\t-------\t-------")
+result.append("Latency\tIP\tASN")
+result.append("-------\t-------\t-------")
 for index,ip in enumerate(sorted.items()):
     data = mapping[ip[0]]
-    result.append(f"{ip[1]}ms\t{ip[0]}\t{data['domain']}\t{data['geo']}\t{data['lg']}")
+    result.append(f"{ip[1]}ms\t{ip[0]}\tAS{data['asn']}")
     if float(ip[1]) < 20 and index == top: top += 1
     if index == top: break
 
