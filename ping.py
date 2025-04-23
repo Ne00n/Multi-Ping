@@ -13,7 +13,7 @@ if len(sys.argv) >= 2:
         if arg[1] == "-a": targetASN = arg[2]
         if arg[0] == "-e": everything = True
 
-file = "https://data.neoon.net/pingable.min.min.json"
+file = "https://data.neoon.net/pingable.min.min.jsonl"
 
 def error(run):
     print(f"Retrying {run+1} of 4")
@@ -22,13 +22,31 @@ def error(run):
         exit()
     time.sleep(2)
 
+targets,mapping = [],{}
 for run in range(4):
     try:
         print(f"Fetching {file}")
         request = urllib.request.urlopen(file, timeout=3)
         if (request.getcode() == 200):
+            print(f"Loading {file}")
             raw = request.read().decode('utf-8')
-            json = json.loads(raw)
+            lines = raw.strip().split('\n')
+            for index, line in enumerate(lines):
+                if index == 0: continue
+                jData = json.loads(line)
+                for asn,data in jData.items():
+                    if targetASN != "" and asn != targetASN: continue
+                    for firstOctet, firstLayer in data.items():
+                        for secondOctet, secondLayer in firstLayer.items():
+                            for thirdOctet, ips in secondLayer.items():
+                                subnet = f"{firstOctet}.{secondOctet}.{thirdOctet}"
+                                ip = random.choice(ips)
+                                ip = f"{subnet}.{ip}"
+                                mapping[ip] = {"asn":asn}
+                                targets.append(ip)
+                                if not everything: break
+                            if not everything: break
+                        if not everything: break
             break
         else:
             print("Got non 200 response code")
@@ -37,22 +55,7 @@ for run in range(4):
         print(f"Error {e}")
         error(run)
 
-targets,count,mapping = [],0,{}
-for asn,data in json['data'].items():
-    if targetASN != "" and asn != targetASN: continue
-    for firstOctet, firstLayer in data.items():
-        for secondOctet, secondLayer in firstLayer.items():
-            for thirdOctet, ips in secondLayer.items():
-                subnet = f"{firstOctet}.{secondOctet}.{thirdOctet}"
-                ip = random.choice(ips)
-                ip = f"{subnet}.{ip}"
-                mapping[ip] = {"asn":asn}
-                targets.append(ip)
-                if not everything: break
-            if not everything: break
-        if not everything: break
-
-results = ""
+results,count = "",0
 while count <= len(targets):
     print(f"fping {count} of {len(targets)}")
     batch = ' '.join(targets[count:count+batchSize])
