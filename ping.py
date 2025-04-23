@@ -55,6 +55,7 @@ for run in range(4):
         print(f"Error {e}")
         error(run)
 
+raw = {}
 results,count = "",0
 while count <= len(targets):
     print(f"fping {count} of {len(targets)}")
