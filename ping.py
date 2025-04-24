@@ -59,7 +59,6 @@ if not temp_file:
     print("Failed to download file after multiple attempts")
     exit()
 
-targets = []
 mapping = {}
 
 try:
@@ -68,22 +67,24 @@ try:
         # Skip the first line if needed
         first_line = f.readline()
         
-        # Process the rest of the lines
-        for line in f:
-            jData = json.loads(line)
-            for asn, data in jData.items():
-                if targetASN != "" and asn != targetASN: continue
-                for firstOctet, firstLayer in data.items():
-                    for secondOctet, secondLayer in firstLayer.items():
-                        for thirdOctet, ips in secondLayer.items():
-                            subnet = f"{firstOctet}.{secondOctet}.{thirdOctet}"
-                            ip = random.choice(ips)
-                            ip = f"{subnet}.{ip}"
-                            mapping[ip] = {"asn": asn}
-                            targets.append(ip)
+        # Write targets to targets.txt instead of storing in memory
+        with open('targets.txt', 'w', encoding='utf-8') as targets_file:
+            # Process the rest of the lines
+            for line in f:
+                jData = json.loads(line)
+                for asn, data in jData.items():
+                    if targetASN != "" and asn != targetASN: continue
+                    for firstOctet, firstLayer in data.items():
+                        for secondOctet, secondLayer in firstLayer.items():
+                            for thirdOctet, ips in secondLayer.items():
+                                subnet = f"{firstOctet}.{secondOctet}.{thirdOctet}"
+                                ip = random.choice(ips)
+                                ip = f"{subnet}.{ip}"
+                                mapping[ip] = {"asn": asn}
+                                targets_file.write(ip + '\n')
+                                if not everything: break
                             if not everything: break
                         if not everything: break
-                    if not everything: break
 finally:
     # Clean up the temporary file
     try:
@@ -93,16 +94,35 @@ finally:
 
 raw = {}
 results, count = "", 0
-while count <= len(targets):
-    print(f"fping {count} of {len(targets)}")
-    batch = ' '.join(targets[count:count+batchSize])
-    if not batch: break
-    p = subprocess.run(f"fping -c {pings} {batch}", stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
-    if not p.stdout.decode('utf-8'):
-        print("Please install fping (apt-get install fping / yum install fping)")
-        exit()
-    results += p.stdout.decode('utf-8')
-    count += batchSize
+
+# Process targets from file in batches
+with open('targets.txt', 'r', encoding='utf-8') as targets_file:
+    while True:
+        # Read batchSize lines at a time
+        batch = []
+        for _ in range(batchSize):
+            line = targets_file.readline().strip()
+            if not line:
+                break
+            batch.append(line)
+        
+        if not batch:
+            break
+            
+        print(f"fping {count} to {count + len(batch)} of ?")
+        batch_str = ' '.join(batch)
+        p = subprocess.run(f"fping -c {pings} {batch_str}", stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        if not p.stdout.decode('utf-8'):
+            print("Please install fping (apt-get install fping / yum install fping)")
+            exit()
+        results += p.stdout.decode('utf-8')
+        count += len(batch)
+
+# Clean up targets file
+try:
+    os.remove('targets.txt')
+except:
+    pass
 
 parsed = re.findall("([0-9.:a-z]+).*?([0-9]+.[0-9]+|NaN).*?([0-9])% loss", results, re.MULTILINE)
 results = {}
