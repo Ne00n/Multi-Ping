@@ -139,20 +139,25 @@ except:
     pass
 
 # Read and process results from CSV
-results = {}
-with open(results_csv, 'r', newline='', encoding='utf-8') as csvfile:
-    reader = csv.reader(csvfile)
-    next(reader)  # Skip header
-    for row in reader:
-        ip, asn, latency = row
-        results[ip] = {'latency': float(latency), 'asn': asn}
+baseline, results, available, top = 20, {}, 0, 50
+for run in range(20):
+    with open(results_csv, 'r', newline='', encoding='utf-8') as csvfile:
+        reader = csv.reader(csvfile)
+        next(reader)  # Skip header
+        for row in reader:
+            ip, asn, latency = row
+            if float(latency) <= baseline:
+                results[ip] = {'latency': float(latency), 'asn': asn}
+            else:
+                available += 1
+    if len(results) >= top or available == 0:
+        break
+    else:
+        baseline += 20
 
 sorted_results = {k: v for k, v in sorted(results.items(), key=lambda item: item[1]['latency'])}
 
-# Prepare output
-result, top = [], 50
-result_json = {}
-
+result, result_json = [], {}
 result.append("Latency\tIP\tASN")
 result.append("-------\t-------\t-------")
 for index, (ip, data) in enumerate(sorted_results.items()):
