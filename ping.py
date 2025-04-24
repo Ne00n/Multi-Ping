@@ -58,8 +58,6 @@ if not temp_file:
     print("Failed to download file after multiple attempts")
     exit()
 
-mapping = {}
-
 try:
     print(f"Reading {file}")
     with open(temp_filename, 'r', encoding='utf-8') as f:
@@ -75,8 +73,7 @@ try:
                                 subnet = f"{firstOctet}.{secondOctet}.{thirdOctet}"
                                 ip = random.choice(ips)
                                 ip = f"{subnet}.{ip}"
-                                mapping[ip] = {"asn": asn}
-                                targets_file.write(ip + '\n')
+                                targets_file.write(f"{ip}\t{asn}\n")  # Write IP and ASN together
                                 if not everything: break
                             if not everything: break
                         if not everything: break
@@ -86,22 +83,25 @@ finally:
     except:
         pass
 
-# Initialize results CSV file
+# Initialize results CSV file with ASN column
 results_csv = 'results.csv'
 with open(results_csv, 'w', newline='', encoding='utf-8') as csvfile:
     writer = csv.writer(csvfile)
-    writer.writerow(['ip', 'latency'])
+    writer.writerow(['ip', 'asn', 'latency'])
 
 # Process targets from file in batches
 count = 0
 with open('targets.txt', 'r', encoding='utf-8') as targets_file:
     while True:
         batch = []
+        ip_asn_map = {}  # Store IP to ASN mapping for this batch
         for _ in range(batchSize):
             line = targets_file.readline().strip()
             if not line:
                 break
-            batch.append(line)
+            ip, asn = line.split('\t')
+            batch.append(ip)
+            ip_asn_map[ip] = asn
         
         if not batch:
             break
@@ -114,7 +114,7 @@ with open('targets.txt', 'r', encoding='utf-8') as targets_file:
             print("Please install fping (apt-get install fping / yum install fping)")
             exit()
         
-        # Parse and save results immediately
+        # Parse and save results immediately with ASN
         output = p.stdout.decode('utf-8')
         parsed = re.findall("([0-9.:a-z]+).*?([0-9]+.[0-9]+|NaN).*?([0-9])% loss", output, re.MULTILINE)
         
@@ -122,7 +122,8 @@ with open('targets.txt', 'r', encoding='utf-8') as targets_file:
             writer = csv.writer(csvfile)
             for ip, ms, loss in parsed:
                 if ms == "NaN": ms = 900
-                writer.writerow([ip, float(ms)])
+                asn = ip_asn_map.get(ip, "UNKNOWN")
+                writer.writerow([ip, asn, float(ms)])
         
         count += len(batch)
 
@@ -138,10 +139,10 @@ with open(results_csv, 'r', newline='', encoding='utf-8') as csvfile:
     reader = csv.reader(csvfile)
     next(reader)  # Skip header
     for row in reader:
-        ip, latency = row
-        results[ip] = float(latency)
+        ip, asn, latency = row
+        results[ip] = {'latency': float(latency), 'asn': asn}
 
-sorted_results = {k: results[k] for k in sorted(results, key=results.get)}
+sorted_results = {k: v for k, v in sorted(results.items(), key=lambda item: item[1]['latency'])}
 
 # Prepare output
 result, top = [], 50
@@ -149,21 +150,19 @@ result_json = {}
 
 result.append("Latency\tIP\tASN")
 result.append("-------\t-------\t-------")
-for index, ip in enumerate(sorted_results.items()):
-    if ip[0] not in mapping:
-        continue  # Skip if IP not in mapping (shouldn't happen)
-    data = mapping[ip[0]]
+for index, (ip, data) in enumerate(sorted_results.items()):
     asn = data['asn']
-    result.append(f"{ip[1]}ms\t{ip[0]}\tAS{asn}")
+    latency = data['latency']
+    result.append(f"{latency}ms\t{ip}\tAS{asn}")
     
     if asn not in result_json:
         result_json[asn] = []
     result_json[asn].append({
-        "ip": ip[0],
-        "latency": ip[1]
+        "ip": ip,
+        "latency": latency
     })
     
-    if float(ip[1]) < 20 and index == top: top += 1
+    if float(latency) < 20 and index == top: top += 1
     if index == top: break
 
 def formatTable(list):
