@@ -1,10 +1,11 @@
 import urllib.request, subprocess, random, json, time, sys, re, tempfile, os
+import csv
 
 pings = 1
 batchSize = 100
 targetASN = ""
 everything = False
-jsonOutput = False  # New parameter for JSON output
+jsonOutput = False
 
 if len(sys.argv) >= 2:
     args = re.findall("((-c|-p|-a)\s?([0-9A-Za-z]+)|-e|-j)",' '.join(sys.argv[1:]))
@@ -32,14 +33,12 @@ for run in range(4):
             with urllib.request.urlopen(file, timeout=3) as response:
                 if response.getcode() == 200:
                     print(f"Downloading {file}")
-                    # Download the file in chunks to save memory
                     chunk_size = 8192
                     while True:
                         chunk = response.read(chunk_size)
                         if not chunk:
                             break
                         temp_file.write(chunk)
-                    
                     temp_filename = temp_file.name
                     break
                 else:
@@ -64,12 +63,8 @@ mapping = {}
 try:
     print(f"Reading {file}")
     with open(temp_filename, 'r', encoding='utf-8') as f:
-        # Skip the first line if needed
         first_line = f.readline()
-        
-        # Write targets to targets.txt instead of storing in memory
         with open('targets.txt', 'w', encoding='utf-8') as targets_file:
-            # Process the rest of the lines
             for line in f:
                 jData = json.loads(line)
                 for asn, data in jData.items():
@@ -86,19 +81,21 @@ try:
                             if not everything: break
                         if not everything: break
 finally:
-    # Clean up the temporary file
     try:
         os.unlink(temp_filename)
     except:
         pass
 
-raw = {}
-results, count = "", 0
+# Initialize results CSV file
+results_csv = 'results.csv'
+with open(results_csv, 'w', newline='', encoding='utf-8') as csvfile:
+    writer = csv.writer(csvfile)
+    writer.writerow(['ip', 'latency'])
 
 # Process targets from file in batches
+count = 0
 with open('targets.txt', 'r', encoding='utf-8') as targets_file:
     while True:
-        # Read batchSize lines at a time
         batch = []
         for _ in range(batchSize):
             line = targets_file.readline().strip()
@@ -109,13 +106,24 @@ with open('targets.txt', 'r', encoding='utf-8') as targets_file:
         if not batch:
             break
             
-        print(f"fping {count} to {count + len(batch)} of ?")
+        print(f"fping {count} to {count + len(batch)}")
         batch_str = ' '.join(batch)
         p = subprocess.run(f"fping -c {pings} {batch_str}", stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+        
         if not p.stdout.decode('utf-8'):
             print("Please install fping (apt-get install fping / yum install fping)")
             exit()
-        results += p.stdout.decode('utf-8')
+        
+        # Parse and save results immediately
+        output = p.stdout.decode('utf-8')
+        parsed = re.findall("([0-9.:a-z]+).*?([0-9]+.[0-9]+|NaN).*?([0-9])% loss", output, re.MULTILINE)
+        
+        with open(results_csv, 'a', newline='', encoding='utf-8') as csvfile:
+            writer = csv.writer(csvfile)
+            for ip, ms, loss in parsed:
+                if ms == "NaN": ms = 900
+                writer.writerow([ip, float(ms)])
+        
         count += len(batch)
 
 # Clean up targets file
@@ -124,29 +132,32 @@ try:
 except:
     pass
 
-parsed = re.findall("([0-9.:a-z]+).*?([0-9]+.[0-9]+|NaN).*?([0-9])% loss", results, re.MULTILINE)
+# Read and process results from CSV
 results = {}
-for ip, ms, loss in parsed:
-    if ms == "NaN": ms = 900
-    if ip not in results: results[ip] = float(ms)
+with open(results_csv, 'r', newline='', encoding='utf-8') as csvfile:
+    reader = csv.reader(csvfile)
+    next(reader)  # Skip header
+    for row in reader:
+        ip, latency = row
+        results[ip] = float(latency)
 
 sorted_results = {k: results[k] for k in sorted(results, key=results.get)}
 
-# Prepare both text and JSON output
+# Prepare output
 result, top = [], 50
-result_json = {}  # JSON output data grouped by ASN
+result_json = {}
 
 result.append("Latency\tIP\tASN")
 result.append("-------\t-------\t-------")
 for index, ip in enumerate(sorted_results.items()):
+    if ip[0] not in mapping:
+        continue  # Skip if IP not in mapping (shouldn't happen)
     data = mapping[ip[0]]
     asn = data['asn']
     result.append(f"{ip[1]}ms\t{ip[0]}\tAS{asn}")
     
-    # Group by ASN in JSON output
     if asn not in result_json:
         result_json[asn] = []
-    
     result_json[asn].append({
         "ip": ip[0],
         "latency": ip[1]
@@ -166,21 +177,24 @@ def formatTable(list):
         elements = row.split("\t")
         for index, entry in enumerate(elements):
             if len(entry) < longest[index]:
-                diff = longest[index] - len(entry)
                 while len(entry) < longest[index]:
                     entry += " "
             response += f"{entry}" if response.endswith("\n") or response == "" else f" {entry}"
         if i < len(list) - 1: response += "\n"
     return response
 
-# If JSON output is requested, save to a file
 if jsonOutput:
     output_filename = "pings.json"
     with open(output_filename, 'w', encoding='utf-8') as f:
         json.dump(result_json, f, indent=2)
     print(f"\nResults saved to {output_filename}")
-    
-# Always display the text output
+
 result = formatTable(result)
 print(f"\nTop {top}")
 print(result)
+
+# Clean up results CSV
+try:
+    os.remove(results_csv)
+except:
+    pass
