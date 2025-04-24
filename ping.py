@@ -4,14 +4,16 @@ pings = 1
 batchSize = 100
 targetASN = ""
 everything = False
+jsonOutput = False  # New parameter for JSON output
 
 if len(sys.argv) >= 2:
-    args = re.findall("((-c|-p|-a)\s?([0-9A-Za-z]+)|-e)",' '.join(sys.argv[1:]))
+    args = re.findall("((-c|-p|-a)\s?([0-9A-Za-z]+)|-e|-j)",' '.join(sys.argv[1:]))
     for arg in args:
         if arg[1] == "-c": pings = float(arg[2])
         if arg[1] == "-p": batchSize = int(arg[2])
         if arg[1] == "-a": targetASN = arg[2]
         if arg[0] == "-e": everything = True
+        if arg[0] == "-j": jsonOutput = True
 
 file = "https://data.neoon.net/pingable.min.min.jsonl"
 
@@ -110,12 +112,26 @@ for ip, ms, loss in parsed:
 
 sorted_results = {k: results[k] for k in sorted(results, key=results.get)}
 
+# Prepare both text and JSON output
 result, top = [], 50
+result_json = {}  # JSON output data grouped by ASN
+
 result.append("Latency\tIP\tASN")
 result.append("-------\t-------\t-------")
 for index, ip in enumerate(sorted_results.items()):
     data = mapping[ip[0]]
-    result.append(f"{ip[1]}ms\t{ip[0]}\tAS{data['asn']}")
+    asn = data['asn']
+    result.append(f"{ip[1]}ms\t{ip[0]}\tAS{asn}")
+    
+    # Group by ASN in JSON output
+    if asn not in result_json:
+        result_json[asn] = []
+    
+    result_json[asn].append({
+        "ip": ip[0],
+        "latency": ip[1]
+    })
+    
     if float(ip[1]) < 20 and index == top: top += 1
     if index == top: break
 
@@ -137,6 +153,14 @@ def formatTable(list):
         if i < len(list) - 1: response += "\n"
     return response
 
+# If JSON output is requested, save to a file
+if jsonOutput:
+    output_filename = "pings.json"
+    with open(output_filename, 'w', encoding='utf-8') as f:
+        json.dump(result_json, f, indent=2)
+    print(f"\nResults saved to {output_filename}")
+    
+# Always display the text output
 result = formatTable(result)
 print(f"\nTop {top}")
 print(result)
