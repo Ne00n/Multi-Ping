@@ -83,6 +83,11 @@ finally:
     except:
         pass
 
+# Count total targets first
+total_targets = 0
+with open('targets.txt', 'r', encoding='utf-8') as f:
+    total_targets = sum(1 for _ in f)
+
 # Initialize results CSV file with ASN column
 results_csv = 'results.csv'
 with open(results_csv, 'w', newline='', encoding='utf-8') as csvfile:
@@ -90,7 +95,7 @@ with open(results_csv, 'w', newline='', encoding='utf-8') as csvfile:
     writer.writerow(['ip', 'asn', 'latency'])
 
 # Process targets from file in batches
-count = 0
+processed = 0
 with open('targets.txt', 'r', encoding='utf-8') as targets_file:
     while True:
         batch = []
@@ -106,7 +111,7 @@ with open('targets.txt', 'r', encoding='utf-8') as targets_file:
         if not batch:
             break
             
-        print(f"fping {count} to {count + len(batch)}")
+        print(f"fping {min(processed + len(batch), total_targets)} of {total_targets}")
         batch_str = ' '.join(batch)
         p = subprocess.run(f"fping -c {pings} {batch_str}", stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
         
@@ -125,7 +130,7 @@ with open('targets.txt', 'r', encoding='utf-8') as targets_file:
                 asn = ip_asn_map.get(ip, "UNKNOWN")
                 writer.writerow([ip, asn, float(ms)])
         
-        count += len(batch)
+        processed += len(batch)
 
 # Clean up targets file
 try:
